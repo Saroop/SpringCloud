@@ -1,0 +1,11 @@
+server:
+  port: 8052    #default port where the service will be started
+ 
+eureka:         #tells about the Eureka server details and its refresh time
+  client:
+    serviceUrl:
+      defaultZone: http://127.0.0.1:8050/eureka/
+ 
+spring:     
+  application:
+    name: sample-app2   #current service name to be used by the eureka server
