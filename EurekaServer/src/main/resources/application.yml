@@ -1,0 +1,3 @@
+spring:  application:    name: Eureka-Server
+server:
+  port: 8050  eureka:  client:    registerWithEureka: false   #telling the server not to register himself in the service registry    fetchRegistry: false    service-url:      defaultZone: http://localhost:8050/eureka
