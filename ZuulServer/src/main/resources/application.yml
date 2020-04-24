@@ -1,0 +1,25 @@
+server:
+  port: 8070
+spring:
+  application:
+    name: zuul-server
+zuul:
+  ignored-services: '*'
+  host:
+    max-total-connections: 500
+    max-per-route-connections: 500
+  routes:
+    sample-app1: 
+      path: /sample-app-1/**
+      sensitive-headers: null
+      service-id: sample-app1
+      strip-prefix: false
+    sample-app2: 
+      path: /sample-app-2/**
+      sensitive-headers: null
+      service-id: sample-app2
+      strip-prefix: false 
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://127.0.0.1:8050/eureka/
