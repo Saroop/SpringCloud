@@ -18,6 +18,11 @@ zuul:
       path: /sample-app-2/**
       sensitive-headers: null
       service-id: sample-app2
+      strip-prefix: false
+    config-mgmt-wrapper: 
+      path: /config/**
+      sensitive-headers: null
+      service-id: config-mgmt-wrapper
       strip-prefix: false 
 eureka:
   client:
