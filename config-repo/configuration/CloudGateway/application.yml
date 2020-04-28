@@ -1,0 +1,5 @@
+server:
+  port: 8054
+spring:     
+  application:
+    name: cloud-gateway   #current service name to be used by the eureka server
