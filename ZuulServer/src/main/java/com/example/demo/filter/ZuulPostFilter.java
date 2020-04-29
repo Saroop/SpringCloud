@@ -46,7 +46,7 @@ public class ZuulPostFilter extends ZuulFilter {
 			}
 			BufferedWriter bw = Files.newBufferedWriter(path,
 	                Charset.forName("UTF-8"), StandardOpenOption.APPEND);
-	        bw.write("Request:" + requestBody + "\nResponse:" + responsBody);
+	        bw.write("Request:" + requestBody + "\nResponse:" + responsBody + "\n");
 	        bw.close();
 		} catch (IOException e) {
 			e.printStackTrace();
