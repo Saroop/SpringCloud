@@ -1,6 +1,2 @@
 server:
   port: 8055
-git:
-  access:
-    userName: Saroop
-    token: 7525937bb7d804eaa4d34f38597e017b6208b50b
