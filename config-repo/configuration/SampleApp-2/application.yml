@@ -1,5 +1,2 @@
-server:
-  port: 8052
-spring:     
-  application:
-    name: sample-app2   #current service name to be used by the eureka server
+--- "{\n   \"server\": {\"port\": 8053},\n   \"spring\": {\"application\": {\"name\"\
+  : \"sample-app2\"}}\n}"
