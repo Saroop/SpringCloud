@@ -1,2 +1,4 @@
---- "{\n   \"server\": {\"port\": 8053},\n   \"spring\": {\"application\": {\"name\"\
-  : \"sample-app2\"}}\n}"
+{
+   "server": {"port": 8053},
+   "spring": {"application": {"name": "sample-app2"}}
+}
