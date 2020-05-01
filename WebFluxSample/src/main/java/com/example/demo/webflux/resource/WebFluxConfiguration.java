@@ -10,11 +10,12 @@ public class WebFluxConfiguration {
 	
 	@Bean
 	public WebClient getWebClient() {
+		
 		return WebClient.builder()
 		        .baseUrl("https://api.github.com")
-		        .defaultHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+		        .defaultHeader(HttpHeaders.CONTENT_TYPE, "application/vnd.github.v3+json")
 		        .defaultHeader(HttpHeaders.USER_AGENT, "Spring 5 WebClient")
 		        .build();
 	}
 	
-}
+}	

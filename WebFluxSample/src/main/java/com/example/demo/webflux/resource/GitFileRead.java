@@ -1,16 +1,16 @@
 package com.example.demo.webflux.resource;
 
-public class GitFile {
+public class GitFileRead {
 	
 	private String message;
 	private String content;
 	private String sha;
 	
-	public GitFile() {
+	public GitFileRead() {
 		super();
 	}
 	
-	public GitFile(String message, String content, String sha) {
+	public GitFileRead(String message, String content, String sha) {
 		super();
 		this.message = message;
 		this.content = content;
