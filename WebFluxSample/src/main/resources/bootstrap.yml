@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: webflux-demo
+  cloud:
+    config:
+      uri:
+      - http://127.0.0.1:8060
+git:
+  access:
+    token: b0dd0840d997b1006bd4937cdadc84b0333bb0b8
