@@ -36,7 +36,7 @@ public class WebFluxService {
 				.retrieve()
 				.bodyToMono(GitFileRead.class);
 		
-		return convertEncodedYamlToJsonString(result);
+		return result.then(convertEncodedYamlToJsonString(result));
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -48,18 +48,21 @@ public class WebFluxService {
 				.retrieve()
 				.bodyToMono(Map.class);
 		
+		return getResult.then(webClient.put()
+				.uri("/repos/Saroop/SpringCloud/contents/config-repo/configuration/" + path + "/application.yml")
+				.header("Authorization", "token " + token)
+				.body(Mono.just(constructUpdateReqBody(content, getResult)), GitFileWrite.class)
+				.retrieve()
+				.bodyToMono(Map.class));
+		
+	}
+
+	private GitFileWrite constructUpdateReqBody(final String content, Mono<Map> getResult) {
 		String sha = (String)getResult.block().get("sha");
 		Mono<String> encodedString =  Mono.just(Base64.getEncoder().encodeToString(content.getBytes()));
 		Committer committer = new Committer("Saroop", "saroopmtr@gmail.com");
         GitFileWrite newFile = new GitFileWrite("Updated configuration", encodedString.block(), sha, committer);
-        
-        return webClient.put()
-				.uri("/repos/Saroop/SpringCloud/contents/config-repo/configuration/" + path + "/application.yml")
-				.header("Authorization", "token " + token)
-				.body(Mono.just(newFile), GitFileWrite.class)
-				.retrieve()
-				.bodyToMono(Map.class);
-        
+		return newFile;
 	}
 	
 	private Mono<String> convertEncodedYamlToJsonString(Mono<GitFileRead> result)
