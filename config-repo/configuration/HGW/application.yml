@@ -1,200 +1,231 @@
-info:
-  app:
-    encoding: "@project.build.sourceEncoding@"
-    java:
-      source: "@java.version@"
-      target: "java.version@"
-logging:
-  level:
-    org.springframework.cloud.gateway: TRACE
-    org.springframework.http.server.reactive: DEBUG
-    org.springframework.web.reactive: DEBUG
-    reactor.ipc.netty: DEBUG
-    reactor.netty: DEBUG
-
-serverpools :
-  pools :
-    LocalPool :
-      -
-        id: local1
-        key: A
-        hostName: localhostL1
-        port: 8091
-      -
-        id: loacal2
-        key: B
-        hostName: localhostL2
-        port: 8092
-      -
-        id: local3
-        key: C
-        hostName: localhostL3
-        port: 8093
-    TestPool :
-      -
-        id: test1
-        key: A
-        hostName: localhost
-        port: 9010
-      -
-        id: test2
-        key: B
-        hostName: localhost
-        port: 9010
-      -
-        id: test3
-        key: C
-        hostName: localhost
-        port: 9011
-    ErrorPool :
-      -
-        id: test1
-        key: A
-        hostName: localhost
-        port: 9010
-      -
-        id: test2
-        key: B
-        hostName: localhost
-        port: 9010
-
-        
-redisconfig:
-  enabled: false
-  mode: single
-  hosts: localhost:6379
-  cluster_name: abcCluster
-  database: 0
-  obtainRetry: 5
-  obtainWait: 10
-
-hystrix:
-  command:
-    default:
-      execution:
-        isolation:
-          thread:
-            timeoutInMilliseconds: 10000
-    mocktest:
-      execution:
-        isolation:
-          thread:
-            timeoutInMilliseconds: 5000
-
-spring:
-  profiles: devscott
-
-
-
-  application:
-    name: HTTP Gateway
-    version: 1.0
-
-
-  cloud:
-    gateway:
-      httpclient:
-        response-timeout: 7000
-        connectTimeout: 1000
-
-      routes:
-        - id: local_mock
-          uri: http://localhost
-          predicates:
-            - HGWRouteEnabled=cb_localmock
-            - Path=/api/print
-            - Header=rppc-agent, local
-          filters:
-            - RewritePath=/(?<segment>.*), /mock/my/test/service
-            - GWInitialRootFilter=4000
-            - GWServerPreferenceATHFilter=TestPool
-            - GWSystemLoadBalancerFilter=roundRobinLoadBalancer, rrBalancer1
-            - GWThrottleFilter
-            - name: GWRetryFilter
-              args:
-                retries: 5
-                attempts: 2
-                statuses: BAD_GATEWAY
-                backoff:
-                  firstBackoff: 10ms
-                  maxBackoff: 50ms
-                  factor: 2
-                  basedOnPreviousValue: false
-        - id: local_mock_error
-          uri: http://localhost
-          predicates:
-            - HGWRouteEnabled=cb_localerror
-            - Path=/api/print
-            - Header=rppc-agent, local
-          filters:
-            - RewritePath=/(?<segment>.*), /mock/test/service1
-            - GWInitialRootFilter=4000
-            - GWServerPreferenceATHFilter=TestPool
-            - GWSystemLoadBalancerFilter=roundRobinLoadBalancer, rrBalancer2
-            - GWThrottleFilter
-            - name: GWRetryFilter
-              args:
-                retries: 5
-                attempts: 2
-                statuses: BAD_GATEWAY
-                backoff:
-                  firstBackoff: 10ms
-                  maxBackoff: 50ms
-                  factor: 2
-                  basedOnPreviousValue: false
-        - id: aws_printproxy
-          uri: https://cis-tpfprintproxy-cis-tpfprintproxy.apps.ocusw2.scs.dev.ascint.sabrecirrus.com/api/print
-          predicates:
-            - Header=rppc-agent, aws
-          filters:
-            - GWInitialRootFilter=4000
-            - GWServerPreferenceMockFilter
-            - GWSystemLoadBalancerFilter=none
-            - GWThrottleFilter
-            - GWRetryFilter
-        - id: websocket_test
-          uri: http://acpdev.vpars.sabre.com:7040/ping
-          order: 9000
-          predicates:
-            - Path=/ping
-httpgateway:
-  hgwcircuitbreaker:
-    redisEnabled: false
-    routeCircuitBreakers:
-      cb_localmock:
-          poolPeriod: 15
-          cutoff: 5
-          openThreshold: 3
-          partialOpenInterval: 8
-      cb_awsprint:
-          poolPeriod: 30
-          cutoff: 20
-          openThreshold: 15
-          partialOpenInterval: 5
-      cb_localerror:
-          poolPeriod: 5
-          cutoff: 2
-          openThreshold: 1
-          partialOpenInterval: 3
-
-  roundrobinlb:
-    roundRobinPool:
-      rrBalancer1:
-          poolID: TestPool
-          defaultHost: A
-      rrBalancer2:
-        poolID: ErrorPool
-        defaultHost: A
-
-  concurrency:
-    enabled: true
-    cleanerPeriod: 5000
-    stalePeriod: 3000
-    cacheConfig:
-      localConcurrent:
-        - service:  /mock/test
-          servers:
-            - hostName: localhost:9010
-              concurrency: 5
-            - hostName: localhost:9011
-              concurrency: 5
+{
+   "info": {"app":    {
+      "encoding": "@project.build.sourceEncoding@",
+      "java":       {
+         "source": "@java.version@",
+         "target": "java.version@"
+      }
+   }},
+   "logging": {"level":    {
+      "org.springframework.cloud.gateway": "DEBUG",
+      "org.springframework.http.server.reactive": "DEBUG",
+      "org.springframework.web.reactive": "DEBUG",
+      "reactor.ipc.netty": "DEBUG",
+      "reactor.netty": "DEBUG"
+   }},
+   "serverpools": {"pools":    {
+      "LocalPool":       [
+                  {
+            "id": "local1",
+            "key": "A",
+            "hostName": "localhostL1",
+            "port": 8091
+         },
+                  {
+            "id": "loacal2",
+            "key": "B",
+            "hostName": "localhostL2",
+            "port": 8092
+         },
+                  {
+            "id": "local3",
+            "key": "C",
+            "hostName": "localhostL3",
+            "port": 8093
+         }
+      ],
+      "TestPool":       [
+                  {
+            "id": "test1",
+            "key": "A",
+            "hostName": "localhost",
+            "port": 9010
+         },
+                  {
+            "id": "test2",
+            "key": "B",
+            "hostName": "localhost",
+            "port": 9010
+         },
+                  {
+            "id": "test3",
+            "key": "C",
+            "hostName": "localhost",
+            "port": 9011
+         }
+      ],
+      "ErrorPool":       [
+                  {
+            "id": "test1",
+            "key": "A",
+            "hostName": "localhost",
+            "port": 9010
+         },
+                  {
+            "id": "test2",
+            "key": "B",
+            "hostName": "localhost",
+            "port": 9010
+         }
+      ]
+   }},
+   "redisconfig":    {
+      "enabled": false,
+      "mode": "single",
+      "hosts": "localhost:6379",
+      "cluster_name": "abcCluster",
+      "database": 0,
+      "obtainRetry": 5,
+      "obtainWait": 10
+   },
+   "hystrix": {"command":    {
+      "default": {"execution": {"isolation": {"thread": {"timeoutInMilliseconds": 10000}}}},
+      "mocktest": {"execution": {"isolation": {"thread": {"timeoutInMilliseconds": 5000}}}}
+   }},
+   "spring":    {
+      "profiles": "devscott",
+      "application":       {
+         "name": "HTTP Gateway",
+         "version": 1
+      },
+      "cloud": {"gateway":       {
+         "httpclient":          {
+            "response-timeout": 7000,
+            "connectTimeout": 1000
+         },
+         "routes":          [
+                        {
+               "id": "local_mock",
+               "uri": "http://localhost",
+               "predicates":                [
+                  "HGWRouteEnabled=cb_localmock",
+                  "Path=/api/print",
+                  "Header=rppc-agent, local"
+               ],
+               "filters":                [
+                  "RewritePath=/(?<segment>.*), /mock/my/test/service",
+                  "GWInitialRootFilter=4000",
+                  "GWServerPreferenceATHFilter=TestPool",
+                  "GWSystemLoadBalancerFilter=roundRobinLoadBalancer, rrBalancer1",
+                  "GWThrottleFilter",
+                                    {
+                     "name": "GWRetryFilter",
+                     "args":                      {
+                        "retries": 5,
+                        "attempts": 2,
+                        "statuses": "BAD_GATEWAY",
+                        "backoff":                         {
+                           "firstBackoff": "10ms",
+                           "maxBackoff": "50ms",
+                           "factor": 2,
+                           "basedOnPreviousValue": false
+                        }
+                     }
+                  }
+               ]
+            },
+                        {
+               "id": "local_mock_error",
+               "uri": "http://localhost",
+               "predicates":                [
+                  "HGWRouteEnabled=cb_localerror",
+                  "Path=/api/print",
+                  "Header=rppc-agent, local"
+               ],
+               "filters":                [
+                  "RewritePath=/(?<segment>.*), /mock/test/service1",
+                  "GWInitialRootFilter=4000",
+                  "GWServerPreferenceATHFilter=TestPool",
+                  "GWSystemLoadBalancerFilter=roundRobinLoadBalancer, rrBalancer2",
+                  "GWThrottleFilter",
+                                    {
+                     "name": "GWRetryFilter",
+                     "args":                      {
+                        "retries": 5,
+                        "attempts": 2,
+                        "statuses": "BAD_GATEWAY",
+                        "backoff":                         {
+                           "firstBackoff": "10ms",
+                           "maxBackoff": "50ms",
+                           "factor": 2,
+                           "basedOnPreviousValue": false
+                        }
+                     }
+                  }
+               ]
+            },
+                        {
+               "id": "aws_printproxy",
+               "uri": "https://cis-tpfprintproxy-cis-tpfprintproxy.apps.ocusw2.scs.dev.ascint.sabrecirrus.com/api/print",
+               "predicates": ["Header=rppc-agent, aws"],
+               "filters":                [
+                  "GWInitialRootFilter=4000",
+                  "GWServerPreferenceMockFilter",
+                  "GWSystemLoadBalancerFilter=none",
+                  "GWThrottleFilter",
+                  "GWRetryFilter"
+               ]
+            },
+                        {
+               "id": "websocket_test",
+               "uri": "http://acpdev.vpars.sabre.com:7040/ping",
+               "order": 9000,
+               "predicates": ["Path=/ping"]
+            }
+         ]
+      }}
+   },
+   "httpgateway":    {
+      "hgwcircuitbreaker":       {
+         "redisEnabled": false,
+         "routeCircuitBreakers":          {
+            "cb_localmock":             {
+               "poolPeriod": 15,
+               "cutoff": 5,
+               "openThreshold": 3,
+               "partialOpenInterval": 8
+            },
+            "cb_awsprint":             {
+               "poolPeriod": 30,
+               "cutoff": 20,
+               "openThreshold": 15,
+               "partialOpenInterval": 5
+            },
+            "cb_localerror":             {
+               "poolPeriod": 5,
+               "cutoff": 2,
+               "openThreshold": 1,
+               "partialOpenInterval": 3
+            }
+         }
+      },
+      "roundrobinlb": {"roundRobinPool":       {
+         "rrBalancer1":          {
+            "poolID": "TestPool",
+            "defaultHost": "A"
+         },
+         "rrBalancer2":          {
+            "poolID": "ErrorPool",
+            "defaultHost": "A"
+         }
+      }},
+      "concurrency":       {
+         "enabled": true,
+         "cleanerPeriod": 5000,
+         "stalePeriod": 3000,
+         "cacheConfig": {"localConcurrent": [         {
+            "service": "/mock/test",
+            "servers":             [
+                              {
+                  "hostName": "localhost:9010",
+                  "concurrency": 5
+               },
+                              {
+                  "hostName": "localhost:9011",
+                  "concurrency": 5
+               }
+            ]
+         }]}
+      }
+   }
+}
