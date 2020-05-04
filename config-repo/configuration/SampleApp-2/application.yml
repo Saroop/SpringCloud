@@ -1,4 +1,4 @@
 {
-   "server": {"port": 8052},
+   "server": {"port": 8053},
    "spring": {"application": {"name": "sample-app2"}}
 }
