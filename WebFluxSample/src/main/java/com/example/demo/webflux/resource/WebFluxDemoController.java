@@ -3,6 +3,8 @@ package com.example.demo.webflux.resource;
 import java.io.IOException;
 import java.util.Map;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.NoHeadException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -12,9 +14,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.webflux.service.WebFluxService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 
 import reactor.core.publisher.Mono;
 
@@ -26,8 +25,7 @@ public class WebFluxDemoController {
 	WebFluxService service;
 
 	@RequestMapping(value = "/{path}", method = RequestMethod.GET, produces="application/json")
-	@HystrixCommand(fallbackMethod="fallbackForGetConfigFile")
-	public Mono<String> getConfigFile(@PathVariable final String path) throws JsonMappingException, JsonProcessingException {
+	public Mono<String> getConfigFile(@PathVariable final String path) throws IOException, NoHeadException, GitAPIException {
 		return service.getConfigFile(path);
 	}
 	
@@ -36,9 +34,5 @@ public class WebFluxDemoController {
 	public Mono<Map> putConfigFile(@PathVariable final String path, @RequestBody final String fileContent) 
 		throws IOException {
 		return service.putConfigFile(path, fileContent);
-	}
-	
-	public Mono<String> fallbackForGetConfigFile(final String path) {
-		return Mono.just("Git repo is not found/available!!!");
 	}
 }

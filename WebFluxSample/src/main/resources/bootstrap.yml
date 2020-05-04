@@ -5,11 +5,6 @@ spring:
     config:
       uri:
       - http://127.0.0.1:8060
-  http:
-    log-request-details: true
 git:
   access:
     token: fc0bb73ef9c2f5ecd7c1bde1fce75250872c5490
-logging:
-  level:
-    org.springframework.web.reactive.function.client.ExchangeFunctions: TRACE

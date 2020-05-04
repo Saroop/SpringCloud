@@ -1,10 +1,20 @@
 package com.example.demo.webflux.service;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.Map;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.NoHeadException;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -15,8 +25,10 @@ import com.example.demo.webflux.resource.GitFileRead;
 import com.example.demo.webflux.resource.GitFileWrite;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 import reactor.core.publisher.Mono;
 
@@ -28,8 +40,35 @@ public class WebFluxService {
 	
 	@Autowired
 	WebClient webClient;
+	
+	@Autowired
+	Repository repository;
 
-	public Mono<String> getConfigFile(final String path) throws JsonMappingException, JsonProcessingException {
+	public Mono<String> getConfigFile(final String path) throws IOException, NoHeadException, GitAPIException {
+		Git git = new Git(repository);
+		Iterable<RevCommit> logs = git.log().all().call();
+	      for (RevCommit rev : logs) {
+	        System.out.print(Instant.ofEpochSecond(rev.getCommitTime()));
+	        System.out.print(": ");
+	        System.out.print(rev.getFullMessage());
+	        System.out.println();
+	        System.out.println(rev.getId().getName());
+	        System.out.print(rev.getAuthorIdent().getName());
+	        System.out.println(rev.getAuthorIdent().getEmailAddress());
+	        System.out.println("-------------------------");
+	      }
+	      
+	      File newFile = new File(repository.getDirectory(), "myNewFile");
+	      newFile.createNewFile();
+	      git.add().addFilepattern("myNewFile").call();
+
+	      // Now, we do the commit with a message
+	      RevCommit rev = git.commit().setAuthor("gildas", "gildas@example.com").setMessage("My first commit").call();
+		
+		return Mono.just("getConfigFile");
+	}
+	
+	/*public Mono<String> getConfigFile(final String path) throws JsonMappingException, JsonProcessingException {
 		Mono<GitFileRead> result = webClient.get()
 				.uri("/repos/Saroop/SpringCloud/contents/config-repo/configuration/" + path + "/application.yml")
 				.header("Authorization", "token " + token)
@@ -37,7 +76,7 @@ public class WebFluxService {
 				.bodyToMono(GitFileRead.class);
 		
 		return result.then(convertEncodedYamlToJsonString(result));
-	}
+	}*/
 
 	@SuppressWarnings("rawtypes")
 	public Mono<Map> putConfigFile(final String path, final String content) throws IOException {
@@ -48,6 +87,8 @@ public class WebFluxService {
 				.retrieve()
 				.bodyToMono(Map.class);
 		
+		
+		
 		return getResult.then(webClient.put()
 				.uri("/repos/Saroop/SpringCloud/contents/config-repo/configuration/" + path + "/application.yml")
 				.header("Authorization", "token " + token)
@@ -57,9 +98,11 @@ public class WebFluxService {
 		
 	}
 
-	private GitFileWrite constructUpdateReqBody(final String content, Mono<Map> getResult) {
+	private GitFileWrite constructUpdateReqBody(final String content, Mono<Map> getResult) throws IOException {
 		String sha = (String)getResult.block().get("sha");
-		Mono<String> encodedString =  Mono.just(Base64.getEncoder().encodeToString(content.getBytes()));
+		JsonNode jsonNodeTree = new ObjectMapper().readTree(content);
+        String jsonAsYaml = new YAMLMapper().writeValueAsString(jsonNodeTree);
+		Mono<String> encodedString =  Mono.just(Base64.getEncoder().encodeToString(jsonAsYaml.getBytes()));
 		Committer committer = new Committer("Saroop", "saroopmtr@gmail.com");
         GitFileWrite newFile = new GitFileWrite("Updated configuration", encodedString.block(), sha, committer);
 		return newFile;
