@@ -1,6 +1,6 @@
 ---
 server:
-  port: 8053
+  port: 8052
 spring:
   application:
     name: "sample-app2"
