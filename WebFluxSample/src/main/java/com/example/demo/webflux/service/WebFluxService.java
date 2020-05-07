@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,13 +30,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 import reactor.core.publisher.Mono;
 
 @Service
-public class WebFluxService2 {
+public class WebFluxService {
 
 	@Value("${git.access.token}")
 	private String token;
@@ -97,7 +100,7 @@ public class WebFluxService2 {
 
 		// git add, commit and push
 		git.add().addFilepattern(".").call();
-		git.commit().setMessage("added a test file for jgit integration").call();
+		git.commit().setCommitter("saroop", "saroopmtr@gmail.com").setMessage("added a test file for jgit integration").call();
 		git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, "")).call();
 
 		deleteTempDirectory(git);
@@ -140,8 +143,9 @@ public class WebFluxService2 {
 	
 	private void writeToFile(final String content, final String path, Git git)
 			throws JsonProcessingException, JsonMappingException, IOException {
-		JsonNode jsonNodeTree = new ObjectMapper().readTree(content);
-		String jsonAsYaml = new YAMLMapper().writeValueAsString(jsonNodeTree);
+		JsonNode originalJsonNodeTree = new ObjectMapper().readTree(convertYamlToJson(readFromFile(git, path)).block());
+		JsonNode updateJsonNodeTree = new ObjectMapper().readTree(content);
+		String jsonAsYaml = new YAMLMapper().writeValueAsString(merge(originalJsonNodeTree, updateJsonNodeTree));
 		Files.write(Paths.get(git.getRepository().getDirectory().getParent()
 				+ "\\config-repo\\configuration\\" + path + "\\application.yml"), jsonAsYaml.getBytes());
 	}
@@ -151,5 +155,39 @@ public class WebFluxService2 {
 	      .sorted(Comparator.reverseOrder())
 	      .map(Path::toFile)
 	      .forEach(File::delete);
+	}
+	
+	private JsonNode merge(JsonNode mainNode, JsonNode updateNode) {
+
+	    Iterator<String> fieldNames = updateNode.fieldNames();
+	    while (fieldNames.hasNext()) {
+	        String updatedFieldName = fieldNames.next();
+	        JsonNode valueToBeUpdated = mainNode.get(updatedFieldName);
+	        JsonNode updatedValue = updateNode.get(updatedFieldName);
+	        // If the node is an @ArrayNode
+	        if (valueToBeUpdated != null && valueToBeUpdated.isArray() && 
+	            updatedValue.isArray()) {
+	            // running a loop for all elements of the updated ArrayNode
+	            for (int i = 0; i < updatedValue.size(); i++) {
+	                JsonNode updatedChildNode = updatedValue.get(i);
+	                // Create a new Node in the node that should be updated, if there was no corresponding node in it
+	                // Use-case - where the updateNode will have a new element in its Array
+	                if (valueToBeUpdated.size() <= i) {
+	                    ((ArrayNode) valueToBeUpdated).add(updatedChildNode);
+	                }
+	                // getting reference for the node to be updated
+	                JsonNode childNodeToBeUpdated = valueToBeUpdated.get(i);
+	                merge(childNodeToBeUpdated, updatedChildNode);
+	            }
+	        // if the Node is an @ObjectNode
+	        } else if (valueToBeUpdated != null && valueToBeUpdated.isObject()) {
+	            merge(valueToBeUpdated, updatedValue);
+	        } else {
+	            if (mainNode instanceof ObjectNode) {
+	                ((ObjectNode) mainNode).replace(updatedFieldName, updatedValue);
+	            }
+	        }
+	    }
+	    return mainNode;
 	}
 }

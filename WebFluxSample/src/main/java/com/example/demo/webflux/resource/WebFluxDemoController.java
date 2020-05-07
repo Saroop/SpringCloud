@@ -20,7 +20,7 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/webflux")
-public class WebFluxDemoController2 {
+public class WebFluxDemoController {
 	
 	@Autowired
 	WebFluxService service;

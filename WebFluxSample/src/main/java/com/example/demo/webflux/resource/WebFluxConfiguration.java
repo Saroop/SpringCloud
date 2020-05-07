@@ -6,7 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
-public class WebFluxConfiguration2 {
+public class WebFluxConfiguration {
 	
 	@Bean
 	public WebClient getWebClient() {
